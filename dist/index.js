@@ -17,3 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // src/index.ts
 __exportStar(require("./logger"), exports);
 __exportStar(require("./telemetry"), exports);
+__exportStar(require("./consul"), exports);
+__exportStar(require("./rabbitMQ"), exports);
