@@ -19,3 +19,4 @@ __exportStar(require("./logger"), exports);
 __exportStar(require("./telemetry"), exports);
 __exportStar(require("./consul"), exports);
 __exportStar(require("./rabbitMQ"), exports);
+__exportStar(require("./htttpClient"), exports);
