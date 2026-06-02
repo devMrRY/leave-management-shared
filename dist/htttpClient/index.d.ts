@@ -1,10 +1,8 @@
 export interface CallOptions extends RequestInit {
-    req?: Request;
+    req?: any;
     forwardHeaders?: Record<string, string | undefined>;
     fallbackUrl?: string;
-    serviceRegistry?: {
-        discover: (serviceName: string) => Promise<string>;
-    };
+    serviceRegistry?: any;
 }
 export declare function extractForwardHeaders(req: any): Record<string, string | undefined>;
 export declare function callService(serviceName: string, path: string, options?: CallOptions): Promise<Response>;
