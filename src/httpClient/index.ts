@@ -1,91 +1,90 @@
 export interface HttpClientOptions {
   baseUrl: string;
-  headers?: HeadersInit;
+  getRequestContext: () =>
+    | {
+        authorization?: string;
+        userId?: string;
+        role?: string;
+      }
+    | undefined;
 }
 
 export class HttpClient {
-  private readonly baseUrl: string;
-  private readonly defaultHeaders: Headers;
-
+  private baseUrl: string;
+  private getRequestContext;
+  
   constructor(options: HttpClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, '');
-    this.defaultHeaders = new Headers(options.headers);
+    this.baseUrl = options.baseUrl.replace(/\/$/, "");
+    this.getRequestContext = options.getRequestContext;
   }
 
-  private request(
-    method: string,
-    path: string,
-    options: RequestInit = {}
-  ): Promise<Response> {
-    const headers = new Headers(this.defaultHeaders);
 
-    if (options.headers) {
-      new Headers(options.headers).forEach((value, key) => {
-        headers.set(key, value);
-      });
+  private buildHeaders(extra?: HeadersInit): Headers {
+    const headers = new Headers(extra);
+    const ctx = this.getRequestContext?.();
+
+    if (ctx?.authorization) headers.set("authorization", ctx.authorization);
+    if (ctx?.userId) headers.set("x-user-id", ctx.userId);
+    if (ctx?.role) headers.set("x-user-role", ctx.role);
+
+    return headers;
+  }
+
+  async request(method: string, path: string, options: RequestInit = {}) {
+    const headers = this.buildHeaders(options.headers);
+    const isStringBody = typeof options.body === "string";
+    const isFormData = options.body instanceof FormData;
+    const hasBody = options.body !== undefined && options.body !== null;
+
+    const contentType = headers.get("content-type");
+    if (!contentType && !isStringBody && !isFormData && hasBody) {
+      headers.set("content-type", "application/json");
     }
-
-    const isJsonBody =
-      options.body &&
-      typeof options.body === 'string';
-
-    const hasContentType = headers.has('content-type');
-
-    if (!hasContentType && !isJsonBody) {
-      headers.set('content-type', 'application/json');
-    }
-
-    return fetch(
-      `${this.baseUrl}/${path.replace(/^\/+/, '')}`,
-      {
-        ...options,
-        method,
-        headers,
-      }
-    );
+    return fetch(`${this.baseUrl}/${path.replace(/^\/+/, "")}`, {
+      ...options,
+      method,
+      headers,
+    });
   }
 
   get(path: string, options?: RequestInit) {
-    return this.request('GET', path, options);
+    return this.request("GET", path, options);
   }
 
-  post(path: string, body?: unknown, options: RequestInit = {}) {
-    return this.request('POST', path, {
+  post(path: string, body?: any, options: RequestInit = {}) {
+    return this.request("POST", path, {
       ...options,
-      body:
-        typeof body === 'object' &&
-          body !== null &&
-          !(body instanceof FormData)
-          ? JSON.stringify(body)
-          : (body as BodyInit),
+      headers: {
+        "content-type": "application/json",
+        ...options.headers,
+      },
+      body: JSON.stringify(body),
     });
   }
 
-  put(path: string, body?: unknown, options: RequestInit = {}) {
-    return this.request('PUT', path, {
+  put(path: string, body?: any, options: RequestInit = {}) {
+    return this.request("PUT", path, {
       ...options,
-      body:
-        typeof body === 'object' &&
-          body !== null &&
-          !(body instanceof FormData)
-          ? JSON.stringify(body)
-          : (body as BodyInit),
+      headers: {
+        "content-type": "application/json",
+        ...options.headers,
+      },
+      body: JSON.stringify(body),
     });
   }
 
-  patch(path: string, body?: unknown, options: RequestInit = {}) {
-    return this.request('PATCH', path, {
+  patch(path: string, body?: any, options: RequestInit = {}) {
+    return this.request("PATCH", path, {
       ...options,
-      body:
-        typeof body === 'object' &&
-          body !== null &&
-          !(body instanceof FormData)
-          ? JSON.stringify(body)
-          : (body as BodyInit),
+      headers: {
+        "content-type": "application/json",
+        ...options.headers,
+      },
+      body: JSON.stringify(body),
     });
   }
 
   delete(path: string, options?: RequestInit) {
-    return this.request('DELETE', path, options);
+    return this.request("DELETE", path, options);
   }
 }
