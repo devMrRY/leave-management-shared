@@ -13,6 +13,12 @@ class HttpClient {
                 headers.set(key, value);
             });
         }
+        const isJsonBody = options.body &&
+            typeof options.body === 'string';
+        const hasContentType = headers.has('content-type');
+        if (!hasContentType && !isJsonBody) {
+            headers.set('content-type', 'application/json');
+        }
         return fetch(`${this.baseUrl}/${path.replace(/^\/+/, '')}`, {
             ...options,
             method,

@@ -25,6 +25,16 @@ export class HttpClient {
       });
     }
 
+    const isJsonBody =
+      options.body &&
+      typeof options.body === 'string';
+
+    const hasContentType = headers.has('content-type');
+
+    if (!hasContentType && !isJsonBody) {
+      headers.set('content-type', 'application/json');
+    }
+
     return fetch(
       `${this.baseUrl}/${path.replace(/^\/+/, '')}`,
       {
@@ -44,8 +54,8 @@ export class HttpClient {
       ...options,
       body:
         typeof body === 'object' &&
-        body !== null &&
-        !(body instanceof FormData)
+          body !== null &&
+          !(body instanceof FormData)
           ? JSON.stringify(body)
           : (body as BodyInit),
     });
@@ -56,8 +66,8 @@ export class HttpClient {
       ...options,
       body:
         typeof body === 'object' &&
-        body !== null &&
-        !(body instanceof FormData)
+          body !== null &&
+          !(body instanceof FormData)
           ? JSON.stringify(body)
           : (body as BodyInit),
     });
@@ -68,8 +78,8 @@ export class HttpClient {
       ...options,
       body:
         typeof body === 'object' &&
-        body !== null &&
-        !(body instanceof FormData)
+          body !== null &&
+          !(body instanceof FormData)
           ? JSON.stringify(body)
           : (body as BodyInit),
     });
