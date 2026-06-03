@@ -54,10 +54,6 @@ export class HttpClient {
   post(path: string, body?: any, options: RequestInit = {}) {
     return this.request("POST", path, {
       ...options,
-      headers: {
-        "content-type": "application/json",
-        ...options.headers,
-      },
       body: JSON.stringify(body),
     });
   }
@@ -65,10 +61,6 @@ export class HttpClient {
   put(path: string, body?: any, options: RequestInit = {}) {
     return this.request("PUT", path, {
       ...options,
-      headers: {
-        "content-type": "application/json",
-        ...options.headers,
-      },
       body: JSON.stringify(body),
     });
   }
@@ -76,10 +68,6 @@ export class HttpClient {
   patch(path: string, body?: any, options: RequestInit = {}) {
     return this.request("PATCH", path, {
       ...options,
-      headers: {
-        "content-type": "application/json",
-        ...options.headers,
-      },
       body: JSON.stringify(body),
     });
   }

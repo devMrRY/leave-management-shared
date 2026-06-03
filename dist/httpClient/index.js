@@ -38,30 +38,18 @@ class HttpClient {
     post(path, body, options = {}) {
         return this.request("POST", path, {
             ...options,
-            headers: {
-                "content-type": "application/json",
-                ...options.headers,
-            },
             body: JSON.stringify(body),
         });
     }
     put(path, body, options = {}) {
         return this.request("PUT", path, {
             ...options,
-            headers: {
-                "content-type": "application/json",
-                ...options.headers,
-            },
             body: JSON.stringify(body),
         });
     }
     patch(path, body, options = {}) {
         return this.request("PATCH", path, {
             ...options,
-            headers: {
-                "content-type": "application/json",
-                ...options.headers,
-            },
             body: JSON.stringify(body),
         });
     }
