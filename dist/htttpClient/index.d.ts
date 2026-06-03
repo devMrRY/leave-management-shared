@@ -1,9 +1,15 @@
-export interface CallOptions extends RequestInit {
-    req?: any;
-    forwardHeaders?: Record<string, string | undefined>;
-    fallbackUrl?: string;
-    serviceRegistry?: any;
+export interface HttpClientOptions {
+    baseUrl: string;
+    headers?: HeadersInit;
 }
-export declare function extractForwardHeaders(req: any): Record<string, string | undefined>;
-export declare function callService(serviceName: string, path: string, options?: CallOptions): Promise<Response>;
-export default callService;
+export declare class HttpClient {
+    private readonly baseUrl;
+    private readonly defaultHeaders;
+    constructor(options: HttpClientOptions);
+    private request;
+    get(path: string, options?: RequestInit): Promise<Response>;
+    post(path: string, body?: unknown, options?: RequestInit): Promise<Response>;
+    put(path: string, body?: unknown, options?: RequestInit): Promise<Response>;
+    patch(path: string, body?: unknown, options?: RequestInit): Promise<Response>;
+    delete(path: string, options?: RequestInit): Promise<Response>;
+}

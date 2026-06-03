@@ -1,46 +1,59 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extractForwardHeaders = extractForwardHeaders;
-exports.callService = callService;
-function extractForwardHeaders(req) {
-    return {
-        authorization: req.headers.authorization,
-        cookie: req.headers.cookie,
-        'x-user-id': req.headers['x-user-id'],
-        'x-user-role': req.headers['x-user-role'],
-    };
+exports.HttpClient = void 0;
+class HttpClient {
+    constructor(options) {
+        this.baseUrl = options.baseUrl.replace(/\/$/, '');
+        this.defaultHeaders = new Headers(options.headers);
+    }
+    request(method, path, options = {}) {
+        const headers = new Headers(this.defaultHeaders);
+        if (options.headers) {
+            new Headers(options.headers).forEach((value, key) => {
+                headers.set(key, value);
+            });
+        }
+        return fetch(`${this.baseUrl}/${path.replace(/^\/+/, '')}`, {
+            ...options,
+            method,
+            headers,
+        });
+    }
+    get(path, options) {
+        return this.request('GET', path, options);
+    }
+    post(path, body, options = {}) {
+        return this.request('POST', path, {
+            ...options,
+            body: typeof body === 'object' &&
+                body !== null &&
+                !(body instanceof FormData)
+                ? JSON.stringify(body)
+                : body,
+        });
+    }
+    put(path, body, options = {}) {
+        return this.request('PUT', path, {
+            ...options,
+            body: typeof body === 'object' &&
+                body !== null &&
+                !(body instanceof FormData)
+                ? JSON.stringify(body)
+                : body,
+        });
+    }
+    patch(path, body, options = {}) {
+        return this.request('PATCH', path, {
+            ...options,
+            body: typeof body === 'object' &&
+                body !== null &&
+                !(body instanceof FormData)
+                ? JSON.stringify(body)
+                : body,
+        });
+    }
+    delete(path, options) {
+        return this.request('DELETE', path, options);
+    }
 }
-async function callService(serviceName, path, options) {
-    // Resolve base URL via service registry, env fallback, or provided fallback
-    let baseUrl = null;
-    try {
-        baseUrl = await options?.serviceRegistry?.discover(serviceName) || null;
-    }
-    catch (err) {
-        // ignore and fall back to env
-        baseUrl = process.env[`${serviceName.toUpperCase().replace(/-/g, '_')}_URL`] || null;
-    }
-    if (!baseUrl) {
-        baseUrl = process.env[`${serviceName.toUpperCase().replace(/-/g, '_')}_URL`] || null;
-    }
-    if (!baseUrl) {
-        throw new Error(`Service not found: ${serviceName}`);
-    }
-    const url = `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\/+/, '')}`;
-    const headers = new Headers(options?.headers || {});
-    const forwarded = {
-        ...options?.forwardHeaders,
-        ...(options?.req ? extractForwardHeaders(options.req) : {}),
-    };
-    for (const [k, v] of Object.entries(forwarded)) {
-        if (v)
-            headers.set(k, v);
-    }
-    const { req, forwardHeaders, ...fetchOptions } = options ?? {};
-    const resp = await fetch(url, {
-        ...fetchOptions,
-        headers,
-    });
-    return resp;
-}
-exports.default = callService;
+exports.HttpClient = HttpClient;

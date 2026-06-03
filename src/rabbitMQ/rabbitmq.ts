@@ -17,11 +17,13 @@ export const connectRabbitMQ = async (): Promise<Channel | null> => {
             } catch (err) {
                 lastError = err;
                 logger.info(`⏳ RabbitMQ not ready, retrying... (${i + 1})`);
-                await new Promise((res) => setTimeout(res, 3000));
+                await new Promise((res) => setTimeout(res, 5000));
             }
         }
     }
-    channel = await connection.createChannel();
+    if (connection) {
+        channel = await connection.createChannel();
+    }
     if (!channel) throw lastError;
     logger.info("RabbitMQ connected");
     return channel;
