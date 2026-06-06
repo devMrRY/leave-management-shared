@@ -36,7 +36,7 @@ class ServiceRegistry {
     async register(name, host, port) {
         const url = `http://${host}:${port}`;
         const serviceId = `${name}-${host}`;
-        const healthCheckUrl = `http://${host}:${port}/health`;
+        const healthCheckUrl = `http://${name}:${port}/health`;
         // Always store in memory for quick access
         let allInstances = this.services.get(name);
         if (!allInstances) {
