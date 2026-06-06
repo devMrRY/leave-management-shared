@@ -5,6 +5,5 @@ export declare const createConsumer: (params: {
     exchange: string;
     queue: string;
     routingKey: string;
-    serviceName: string;
     handler: (data: any) => Promise<void>;
 }) => Promise<void>;

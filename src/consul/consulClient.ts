@@ -115,8 +115,6 @@ class ConsulClient {
       if (!response.ok) {
         throw new Error(`Deregistration failed: ${response.statusText}`);
       }
-
-      console.log(`✓ Deregistered from Consul: ${serviceId}`);
       return true;
     } catch (error) {
       console.error(

@@ -52,7 +52,9 @@ class ServiceRegistry {
             this.services.set(name, allInstances);
         }
         // If Consul available, register there too
-        while (true) {
+        let counter = 0;
+        while (counter < 5) {
+            counter++;
             try {
                 const registered = await consulClient_1.consulClient.registerService({
                     ID: serviceId,
@@ -63,14 +65,14 @@ class ServiceRegistry {
                         HTTP: healthCheckUrl,
                         Interval: "10s",
                         Timeout: "5s",
-                        DeregisterCriticalServiceAfter: "30s",
+                        DeregisterCriticalServiceAfter: "60s",
                     },
                     Tags: ["v1"],
                 });
                 if (registered) {
                     allInstances.get(serviceId).source = "consul";
                     this.services.set(name, allInstances);
-                    console.log(`✓ Service registered with Consul: ${name}`);
+                    console.log(`✓ Service registered with Consul: ${name} at ${host}:${port}`);
                     break;
                 }
             }
@@ -91,7 +93,6 @@ class ServiceRegistry {
                 let allInstances = this.services.get(name);
                 if (allInstances) {
                     allInstances.delete(serviceId);
-                    this.services.set(name, allInstances);
                 }
             }
             catch (error) {
@@ -108,7 +109,7 @@ class ServiceRegistry {
             try {
                 const result = await consulClient_1.consulClient.discoverService(name);
                 if (result) {
-                    const key = `${name}-${result.instances[0]?.Service.Address}`;
+                    const key = result.instances[0]?.Service.ID;
                     // Update memory cache
                     let allInstances = this.services.get(name);
                     if (!allInstances) {
@@ -118,12 +119,12 @@ class ServiceRegistry {
                     allInstances.set(key, {
                         name,
                         url: result.url,
-                        port: parseInt(result.url.split(":").pop() || "0", 10),
+                        port: result.instances[0].Service.Port || 0,
                         healthy: true,
                         lastHealthCheck: new Date(),
                         source: "consul",
                     });
-                    this.services.set(name, allInstances);
+                    // this.services.set(name, allInstances);
                     return result.url;
                 }
             }
@@ -148,9 +149,8 @@ class ServiceRegistry {
         const response = [];
         const allServices = [...this.services.values()];
         if (allServices?.length) {
-            allServices.forEach(service => {
-                const allInstanceMap = [...service.values()];
-                response.concat(allInstanceMap);
+            allServices.forEach((service) => {
+                response.push(...service.values());
             });
         }
         return response;
@@ -163,37 +163,6 @@ class ServiceRegistry {
         const servicesInstances = [...(serviceMap?.values() || [])];
         return servicesInstances.length > 0;
     }
-    // /**
-    //  * Update service health status
-    //  */
-    // setHealthStatus(name: string, healthy: boolean): void {
-    //   const service = this.services.get(name);
-    //   if (service) {
-    //     service.healthy = healthy;
-    //     service.lastHealthCheck = new Date();
-    //   }
-    // }
-    // /**
-    //  * Get service health status
-    //  */
-    // getHealthStatus(name: string): boolean | null {
-    //   const service = this.services.get(name);
-    //   return service ? (service.healthy ?? false) : null;
-    // }
-    /**
-     * List all services with their status
-     */
-    // status(): string {
-    //   if (this.services.size === 0) {
-    //     return "No services registered";
-    //   }
-    //   return Array.from(this.services.values())
-    //     .map(
-    //       (s) =>
-    //         `${s.name}: ${s.url} (${s.healthy ? "healthy" : "unhealthy"}) [${s.source}]`,
-    //     )
-    //     .join("\n");
-    // }
     /**
      * Check Consul availability
      */
@@ -232,19 +201,23 @@ class ServiceRegistry {
                     const isHealthy = !instance.Checks ||
                         instance.Checks.every((check) => check.Status === "passing");
                     const key = instance.Service.ID;
-                    if (isHealthy && serviceInstances?.get(key)) {
-                        serviceInstances.delete(key);
-                        serviceInstances.set(key, {
-                            name,
-                            url: `http://${instance.Service.Address}:${instance.Service.Port}`,
-                            port: Number(instance.Service.Port),
-                            healthy: true,
-                            lastHealthCheck: new Date(),
-                            source: "consul",
-                        });
+                    if (isHealthy) {
+                        if (serviceInstances?.has(key)) {
+                            serviceInstances.set(key, {
+                                name,
+                                url: `http://${instance.Service.Address}:${instance.Service.Port}`,
+                                port: Number(instance.Service.Port),
+                                healthy: true,
+                                lastHealthCheck: new Date(),
+                                source: "consul",
+                            });
+                        }
                     }
                     else {
-                        this.services.delete(key);
+                        const serviceInstances = this.services.get(name);
+                        if (serviceInstances?.has(key)) {
+                            serviceInstances.delete(key);
+                        }
                         // Try to deregister this unhealthy instance (by instance ID if available)
                         try {
                             await this.deregister(name, key);

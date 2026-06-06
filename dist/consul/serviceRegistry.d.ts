@@ -39,9 +39,6 @@ declare class ServiceRegistry {
      */
     isRegistered(name: string): boolean;
     /**
-     * List all services with their status
-     */
-    /**
      * Check Consul availability
      */
     isConsulAvailable(): boolean;

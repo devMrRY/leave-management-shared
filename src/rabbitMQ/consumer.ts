@@ -39,7 +39,6 @@ export const createConsumer = async (params: {
   exchange: string;
   queue: string;
   routingKey: string;
-  serviceName: string;
   handler: (data: any) => Promise<void>;
 }) => {
   const { channel, exchange, queue, routingKey, handler } = params;

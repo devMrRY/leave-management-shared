@@ -38,7 +38,6 @@ class ConsulClient {
             if (!response.ok) {
                 throw new Error(`Registration failed: ${response.statusText}`);
             }
-            console.log(`✓ Registered with Consul: ${config.Name} (${config.Address}:${config.Port})`);
             return true;
         }
         catch (error) {
@@ -57,7 +56,6 @@ class ConsulClient {
             if (!response.ok) {
                 throw new Error(`Deregistration failed: ${response.statusText}`);
             }
-            console.log(`✓ Deregistered from Consul: ${serviceId}`);
             return true;
         }
         catch (error) {
