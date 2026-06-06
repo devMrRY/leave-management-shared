@@ -1,24 +1,18 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.initTelemetry = void 0;
-const sdk_node_1 = require("@opentelemetry/sdk-node");
-const resources_1 = require("@opentelemetry/resources");
-const auto_instrumentations_node_1 = require("@opentelemetry/auto-instrumentations-node");
-const exporter_trace_otlp_http_1 = require("@opentelemetry/exporter-trace-otlp-http");
-const initTelemetry = () => {
-    const traceExporter = new exporter_trace_otlp_http_1.OTLPTraceExporter({
-        url: 'http://jaeger:4318/v1/traces'
-    });
-    const sdk = new sdk_node_1.NodeSDK({
-        traceExporter,
-        resource: (0, resources_1.resourceFromAttributes)({
-            'service.name': process.env.SERVICE_NAME || 'unknown-service'
-        }),
-        instrumentations: [
-            (0, auto_instrumentations_node_1.getNodeAutoInstrumentations)()
-        ]
-    });
-    sdk.start();
-    console.log(`Tracing initialized for ${process.env.SERVICE_NAME || 'unknown-service'}`);
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
-exports.initTelemetry = initTelemetry;
+Object.defineProperty(exports, "__esModule", { value: true });
+__exportStar(require("./initTelemetry.js"), exports);
+__exportStar(require("./tracing.js"), exports);

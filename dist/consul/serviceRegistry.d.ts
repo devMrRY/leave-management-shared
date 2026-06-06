@@ -8,7 +8,7 @@ interface ServiceEntry {
     port: number;
     healthy?: boolean;
     lastHealthCheck?: Date;
-    source?: 'consul' | 'env' | 'memory';
+    source?: "consul" | "memory";
 }
 declare class ServiceRegistry {
     private services;
@@ -25,7 +25,7 @@ declare class ServiceRegistry {
     /**
      * Deregister a service from Consul
      */
-    deregister(id: string): Promise<void>;
+    deregister(name: string, serviceId: string): Promise<void>;
     /**
      * Discover a service URL by name (check Consul first, then memory, then env vars)
      */
@@ -39,17 +39,8 @@ declare class ServiceRegistry {
      */
     isRegistered(name: string): boolean;
     /**
-     * Update service health status
-     */
-    setHealthStatus(name: string, healthy: boolean): void;
-    /**
-     * Get service health status
-     */
-    getHealthStatus(name: string): boolean | null;
-    /**
      * List all services with their status
      */
-    status(): string;
     /**
      * Check Consul availability
      */

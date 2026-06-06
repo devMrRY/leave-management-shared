@@ -7,8 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.consulClient = void 0;
 class ConsulClient {
     constructor() {
-        this.consulHost = process.env.CONSUL_HOST || 'consul';
-        this.consulPort = parseInt(process.env.CONSUL_PORT || '8500', 10);
+        this.consulHost = process.env.CONSUL_HOST || "consul";
+        this.consulPort = parseInt(process.env.CONSUL_PORT || "8500", 10);
         this.consulUrl = `http://${this.consulHost}:${this.consulPort}`;
     }
     /**
@@ -17,12 +17,11 @@ class ConsulClient {
     async isAvailable() {
         try {
             const response = await fetch(`${this.consulUrl}/v1/agent/self`, {
-                timeout: 2000
+                timeout: 2000,
             });
             return response.ok;
         }
         catch (error) {
-            console.warn('⚠️ Consul unavailable:', error.message);
             return false;
         }
     }
@@ -32,9 +31,9 @@ class ConsulClient {
     async registerService(config) {
         try {
             const response = await fetch(`${this.consulUrl}/v1/agent/service/register`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(config),
             });
             if (!response.ok) {
                 throw new Error(`Registration failed: ${response.statusText}`);
@@ -43,7 +42,7 @@ class ConsulClient {
             return true;
         }
         catch (error) {
-            console.error('✗ Consul registration failed:', error.message);
+            console.error("✗ Consul registration failed:", error.message);
             return false;
         }
     }
@@ -53,7 +52,7 @@ class ConsulClient {
     async deregisterService(serviceId) {
         try {
             const response = await fetch(`${this.consulUrl}/v1/agent/service/deregister/${serviceId}`, {
-                method: 'PUT'
+                method: "PUT",
             });
             if (!response.ok) {
                 throw new Error(`Deregistration failed: ${response.statusText}`);
@@ -62,7 +61,7 @@ class ConsulClient {
             return true;
         }
         catch (error) {
-            console.error('✗ Consul deregistration failed:', error.message);
+            console.error("✗ Consul deregistration failed:", error.message);
             return false;
         }
     }
@@ -71,7 +70,7 @@ class ConsulClient {
      */
     async discoverService(serviceName) {
         try {
-            const response = await fetch(`${this.consulUrl}/v1/catalog/service/${serviceName}?passing=true`);
+            const response = await fetch(`${this.consulUrl}/v1/health/service/${serviceName}?passing=true`);
             if (!response.ok) {
                 throw new Error(`Discovery failed: ${response.statusText}`);
             }
@@ -105,7 +104,7 @@ class ConsulClient {
             return data.map((item) => ({
                 ID: item.Service.ID,
                 Service: item.Service,
-                Checks: item.Checks
+                Checks: item.Checks,
             }));
         }
         catch (error) {
@@ -117,8 +116,8 @@ class ConsulClient {
      * Build service URL from Consul instance
      */
     buildServiceUrl(instance) {
-        const { ServiceAddress, ServicePort } = instance;
-        return `http://${ServiceAddress}:${ServicePort}`;
+        const { Address, Port } = instance.Service;
+        return `http://${Address}:${Port}`;
     }
     /**
      * Get all services from Consul catalog
@@ -132,7 +131,7 @@ class ConsulClient {
             return await response.json();
         }
         catch (error) {
-            console.warn('⚠️ Failed to list services:', error.message);
+            console.warn("⚠️ Failed to list services:", error.message);
             return {};
         }
     }
@@ -143,7 +142,7 @@ class ConsulClient {
         return {
             consulUrl: this.consulUrl,
             host: this.consulHost,
-            port: this.consulPort
+            port: this.consulPort,
         };
     }
 }

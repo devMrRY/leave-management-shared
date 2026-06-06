@@ -48,7 +48,7 @@ interface ConsulCatalogServiceInstance {
 }
 interface ServiceDiscoveryResult {
   url: string;
-  instances: ConsulCatalogServiceInstance[];
+  instances: ConsulServiceInstance[];
 }
 
 class ConsulClient {
@@ -57,8 +57,8 @@ class ConsulClient {
   private consulPort: number;
 
   constructor() {
-    this.consulHost = process.env.CONSUL_HOST || 'consul';
-    this.consulPort = parseInt(process.env.CONSUL_PORT || '8500', 10);
+    this.consulHost = process.env.CONSUL_HOST || "consul";
+    this.consulPort = parseInt(process.env.CONSUL_PORT || "8500", 10);
     this.consulUrl = `http://${this.consulHost}:${this.consulPort}`;
   }
 
@@ -68,11 +68,10 @@ class ConsulClient {
   async isAvailable(): Promise<boolean> {
     try {
       const response = await fetch(`${this.consulUrl}/v1/agent/self`, {
-        timeout: 2000
+        timeout: 2000,
       } as any);
       return response.ok;
     } catch (error) {
-      console.warn('⚠️ Consul unavailable:', (error as Error).message);
       return false;
     }
   }
@@ -82,20 +81,21 @@ class ConsulClient {
    */
   async registerService(config: ConsulServiceConfig): Promise<boolean> {
     try {
-      const response = await fetch(`${this.consulUrl}/v1/agent/service/register`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
+      const response = await fetch(
+        `${this.consulUrl}/v1/agent/service/register`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Registration failed: ${response.statusText}`);
       }
-
-      console.log(`✓ Registered with Consul: ${config.Name} (${config.Address}:${config.Port})`);
       return true;
     } catch (error) {
-      console.error('✗ Consul registration failed:', (error as Error).message);
+      console.error("✗ Consul registration failed:", (error as Error).message);
       return false;
     }
   }
@@ -105,9 +105,12 @@ class ConsulClient {
    */
   async deregisterService(serviceId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.consulUrl}/v1/agent/service/deregister/${serviceId}`, {
-        method: 'PUT'
-      });
+      const response = await fetch(
+        `${this.consulUrl}/v1/agent/service/deregister/${serviceId}`,
+        {
+          method: "PUT",
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Deregistration failed: ${response.statusText}`);
@@ -116,7 +119,10 @@ class ConsulClient {
       console.log(`✓ Deregistered from Consul: ${serviceId}`);
       return true;
     } catch (error) {
-      console.error('✗ Consul deregistration failed:', (error as Error).message);
+      console.error(
+        "✗ Consul deregistration failed:",
+        (error as Error).message,
+      );
       return false;
     }
   }
@@ -124,15 +130,17 @@ class ConsulClient {
   /**
    * Discover a service and get its URL
    */
-  async discoverService(serviceName: string): Promise<ServiceDiscoveryResult | null> {
+  async discoverService(
+    serviceName: string,
+  ): Promise<ServiceDiscoveryResult | null> {
     try {
-      const response = await fetch(`${this.consulUrl}/v1/catalog/service/${serviceName}?passing=true`);
-
+      const response = await fetch(
+        `${this.consulUrl}/v1/health/service/${serviceName}?passing=true`,
+      );
       if (!response.ok) {
         throw new Error(`Discovery failed: ${response.statusText}`);
       }
-
-      const healthyInstances: ConsulCatalogServiceInstance[] = await response.json();
+      const healthyInstances: ConsulServiceInstance[] = await response.json();
 
       if (healthyInstances.length === 0) {
         console.warn(`⚠️ No healthy instances for service: ${serviceName}`);
@@ -140,14 +148,15 @@ class ConsulClient {
       }
 
       // Use first healthy instance (in production, implement load balancing)
-      const instance = healthyInstances[Math.floor(
-        Math.random() * healthyInstances.length
-      )];
+      const instance =
+        healthyInstances[Math.floor(Math.random() * healthyInstances.length)];
       const url = this.buildServiceUrl(instance);
-
       return { url, instances: [instance] };
     } catch (error) {
-      console.warn(`⚠️ Service discovery failed for ${serviceName}:`, (error as Error).message);
+      console.warn(
+        `⚠️ Service discovery failed for ${serviceName}:`,
+        (error as Error).message,
+      );
       return null;
     }
   }
@@ -155,11 +164,17 @@ class ConsulClient {
   /**
    * Get all service instances (with health) for a service
    */
-  async getAllServiceInstances(serviceName: string): Promise<ConsulServiceInstance[]> {
+  async getAllServiceInstances(
+    serviceName: string,
+  ): Promise<ConsulServiceInstance[]> {
     try {
-      const response = await fetch(`${this.consulUrl}/v1/health/service/${serviceName}`);
+      const response = await fetch(
+        `${this.consulUrl}/v1/health/service/${serviceName}`,
+      );
       if (!response.ok) {
-        throw new Error(`Failed to fetch all service instances: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch all service instances: ${response.statusText}`,
+        );
       }
       // Consul returns array of objects with .Service and .Checks
       const data = await response.json();
@@ -167,10 +182,13 @@ class ConsulClient {
       return data.map((item: any) => ({
         ID: item.Service.ID,
         Service: item.Service,
-        Checks: item.Checks
+        Checks: item.Checks,
       }));
     } catch (error) {
-      console.warn(`⚠️ Failed to get all service instances for ${serviceName}:`, (error as Error).message);
+      console.warn(
+        `⚠️ Failed to get all service instances for ${serviceName}:`,
+        (error as Error).message,
+      );
       return [];
     }
   }
@@ -178,9 +196,9 @@ class ConsulClient {
   /**
    * Build service URL from Consul instance
    */
-  private buildServiceUrl(instance: { ServiceAddress: string; ServicePort: number }): string {
-    const { ServiceAddress, ServicePort } = instance;
-    return `http://${ServiceAddress}:${ServicePort}`;
+  private buildServiceUrl(instance: any): string {
+    const { Address, Port } = instance.Service;
+    return `http://${Address}:${Port}`;
   }
 
   /**
@@ -196,7 +214,7 @@ class ConsulClient {
 
       return await response.json();
     } catch (error) {
-      console.warn('⚠️ Failed to list services:', (error as Error).message);
+      console.warn("⚠️ Failed to list services:", (error as Error).message);
       return {};
     }
   }
@@ -208,7 +226,7 @@ class ConsulClient {
     return {
       consulUrl: this.consulUrl,
       host: this.consulHost,
-      port: this.consulPort
+      port: this.consulPort,
     };
   }
 }

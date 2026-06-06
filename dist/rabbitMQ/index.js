@@ -1,10 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.connectRabbitMQ = exports.publish = exports.createConsumer = exports.connectConsumer = void 0;
+exports.publish = exports.createConsumer = exports.connectChannel = void 0;
 var consumer_js_1 = require("./consumer.js");
-Object.defineProperty(exports, "connectConsumer", { enumerable: true, get: function () { return consumer_js_1.connectConsumer; } });
+Object.defineProperty(exports, "connectChannel", { enumerable: true, get: function () { return consumer_js_1.connectChannel; } });
 Object.defineProperty(exports, "createConsumer", { enumerable: true, get: function () { return consumer_js_1.createConsumer; } });
 var publish_js_1 = require("./publish.js");
 Object.defineProperty(exports, "publish", { enumerable: true, get: function () { return publish_js_1.publish; } });
-var rabbitmq_js_1 = require("./rabbitmq.js");
-Object.defineProperty(exports, "connectRabbitMQ", { enumerable: true, get: function () { return rabbitmq_js_1.connectRabbitMQ; } });

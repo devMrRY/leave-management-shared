@@ -1,12 +1,11 @@
-import pino from 'pino';
-import { trace } from '@opentelemetry/api';
+import pino from "pino";
+import { trace } from "@opentelemetry/api";
 
 export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || "info",
 
   mixin() {
     const span = trace.getActiveSpan();
-
     if (!span) {
       return {};
     }
@@ -15,7 +14,7 @@ export const logger = pino({
 
     return {
       traceId: ctx.traceId,
-      spanId: ctx.spanId
+      spanId: ctx.spanId,
     };
-  }
+  },
 });

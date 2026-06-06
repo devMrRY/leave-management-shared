@@ -30,21 +30,9 @@ interface ConsulServiceInstance {
         Status: string;
     }>;
 }
-interface ConsulCatalogServiceInstance {
-    ID: string;
-    Node: string;
-    Address: string;
-    Datacenter: string;
-    ServiceID: string;
-    ServiceName: string;
-    ServiceAddress: string;
-    ServicePort: number;
-    ServiceTags?: string[];
-    ServiceMeta?: Record<string, string>;
-}
 interface ServiceDiscoveryResult {
     url: string;
-    instances: ConsulCatalogServiceInstance[];
+    instances: ConsulServiceInstance[];
 }
 declare class ConsulClient {
     private consulUrl;
