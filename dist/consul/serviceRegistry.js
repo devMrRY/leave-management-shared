@@ -73,6 +73,7 @@ class ServiceRegistry {
                     allInstances.get(serviceId).source = "consul";
                     this.services.set(name, allInstances);
                     console.log(`✓ Service registered with Consul: ${name} at ${host}:${port}`);
+                    console.log(`${serviceId} heath check url ${healthCheckUrl}`);
                     break;
                 }
             }
@@ -201,6 +202,7 @@ class ServiceRegistry {
                     const isHealthy = !instance.Checks ||
                         instance.Checks.every((check) => check.Status === "passing");
                     const key = instance.Service.ID;
+                    console.log(`${key}: health: ${JSON.stringify(instance.Checks)}`);
                     if (isHealthy) {
                         if (serviceInstances?.has(key)) {
                             serviceInstances.set(key, {
