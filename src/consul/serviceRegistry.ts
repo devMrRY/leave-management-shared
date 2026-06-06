@@ -44,9 +44,9 @@ class ServiceRegistry {
   /**
    * Register a service (with Consul if available, fallback to memory)
    */
-  async register(name: string, host: string, port: number): Promise<void> {
-    const url = `http://${host}:${port}`;
-    const serviceId = `${name}-${host}`;
+  async register(name: string, id: string, port: number): Promise<void> {
+    const url = `http://${name}:${port}`;
+    const serviceId = `${name}-${id}`;
     const healthCheckUrl = `http://${name}:${port}/health`;
     // Always store in memory for quick access
     let allInstances = this.services.get(name);
@@ -70,7 +70,7 @@ class ServiceRegistry {
         const registered = await consulClient.registerService({
           ID: serviceId,
           Name: name,
-          Address: host,
+          Address: name,
           Port: port,
           Check: {
             HTTP: healthCheckUrl,
@@ -84,10 +84,8 @@ class ServiceRegistry {
         if (registered) {
           allInstances.get(serviceId)!.source = "consul";
           this.services.set(name, allInstances);
-          console.log(
-            `✓ Service registered with Consul: ${name} at ${host}:${port}`,
-          );
-          console.log(`${serviceId} heath check url ${healthCheckUrl}`)
+          console.log(`✓ Service registered with Consul: ${name}:${port}`);
+          console.log(`${serviceId} heath check url ${healthCheckUrl}`);
           break;
         }
       } catch (error) {
@@ -107,11 +105,11 @@ class ServiceRegistry {
     if (this.consulAvailable) {
       try {
         await consulClient.deregisterService(serviceId);
-        console.log(`✓ Service deregistered from Consul: ${name}`);
         let allInstances = this.services.get(name);
         if (allInstances) {
           allInstances.delete(serviceId);
         }
+        console.log(`✓ Service deregistered from Consul: ${name}`);
       } catch (error) {
         console.error(
           `✗ Failed to deregister from Consul:`,
@@ -130,22 +128,6 @@ class ServiceRegistry {
       try {
         const result = await consulClient.discoverService(name);
         if (result) {
-          const key = result.instances[0]?.Service.ID;
-          // Update memory cache
-          let allInstances = this.services.get(name);
-          if (!allInstances) {
-            allInstances = new Map<string, ServiceEntry>();
-          }
-          allInstances.delete(key);
-          allInstances.set(key, {
-            name,
-            url: result.url,
-            port: result.instances[0].Service.Port || 0,
-            healthy: true,
-            lastHealthCheck: new Date(),
-            source: "consul",
-          });
-          // this.services.set(name, allInstances);
           return result.url;
         }
       } catch (error) {
@@ -155,18 +137,10 @@ class ServiceRegistry {
         );
       }
     }
-
-    // Fall back to memory
-    const allInstancesMap = this.services.get(name);
-    if (allInstancesMap) {
-      const allInstances = [...allInstancesMap.values()];
-      const service =
-        allInstances[Math.floor(Math.random() * allInstances.length)];
-      return service.url;
-    }
-
-    console.warn(`⚠ Service not found: ${name}`);
-    return null;
+    const fallback = this.services.get(name);
+    if (!fallback) return null;
+    const instances = [...fallback.values()];
+    return instances[Math.floor(Math.random() * instances.length)].url;
   }
 
   /**
@@ -236,7 +210,7 @@ class ServiceRegistry {
             !instance.Checks ||
             instance.Checks.every((check: any) => check.Status === "passing");
           const key = instance.Service.ID;
-          console.log(`${key}: health: ${JSON.stringify(instance.Checks)}`)
+          console.log(`${key}: health: ${JSON.stringify(instance.Checks)}`);
           if (isHealthy) {
             if (serviceInstances?.has(key)) {
               serviceInstances.set(key, {
@@ -249,8 +223,6 @@ class ServiceRegistry {
               });
             }
           } else {
-            const serviceInstances = this.services.get(name);
-
             if (serviceInstances?.has(key)) {
               serviceInstances.delete(key);
             }

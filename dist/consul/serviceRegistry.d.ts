@@ -21,7 +21,7 @@ declare class ServiceRegistry {
     /**
      * Register a service (with Consul if available, fallback to memory)
      */
-    register(name: string, host: string, port: number): Promise<void>;
+    register(name: string, id: string, port: number): Promise<void>;
     /**
      * Deregister a service from Consul
      */
