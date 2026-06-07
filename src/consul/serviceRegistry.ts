@@ -101,27 +101,8 @@ class ServiceRegistry {
   /**
    * Deregister a service from Consul
    */
-  async deregister(name: string, serviceId: string): Promise<void> {
-    console.log(
-      `-------degister checking consul avalability----`,
-      this.isConsulAvailable(),
-      serviceId,
-    );
-    if (this.isConsulAvailable()) {
-      try {
-        await consulClient.deregisterService(serviceId);
-        let allInstances = this.services.get(name);
-        if (allInstances) {
-          allInstances.delete(serviceId);
-        }
-        console.log(`✓ Service deregistered from Consul: ${name}`);
-      } catch (error) {
-        console.error(
-          `✗ Failed to deregister from Consul:`,
-          (error as Error).message,
-        );
-      }
-    }
+  async deregister(name: string): Promise<void> {
+    this.services.delete(name);
   }
 
   /**
@@ -129,7 +110,6 @@ class ServiceRegistry {
    */
   async discover(name: string): Promise<string | null> {
     // Try Consul first if available
-    console.log(`---${this.isConsulAvailable()}-----`);
     const serviceInstances = this.services.get(name);
     const allInstances = [...(serviceInstances?.values() || [])];
     const instance =
@@ -141,7 +121,6 @@ class ServiceRegistry {
     if (this.isConsulAvailable()) {
       try {
         const result = await consulClient.discoverService(name);
-        console.log(`-------discovery response-------`, result?.url);
         if (result) {
           return result.url;
         }
@@ -161,10 +140,6 @@ class ServiceRegistry {
    */
   getAll(): ServiceEntry[] {
     const response: ServiceEntry[] = [];
-    console.log(
-      `-------services object---------`,
-      JSON.stringify(this.services.values()),
-    );
     const allServices = [...this.services.values()];
     if (allServices?.length) {
       allServices.forEach((service) => {
@@ -210,7 +185,6 @@ class ServiceRegistry {
    * Refresh all services: keep healthy, remove/deregister unhealthy
    */
   async refreshAll(): Promise<void> {
-    console.log(`------refreshAll------`, this.isConsulAvailable());
     if (!this.isConsulAvailable()) {
       this.initializeConsul();
       return;
@@ -219,7 +193,6 @@ class ServiceRegistry {
     try {
       // 1. Get all service names from Consul
       const allServices = await consulClient.listServices();
-      console.log(`---------allServices-------`, JSON.stringify(allServices));
       const serviceNames = Object.keys(allServices);
 
       // 2. For each service, get all instances (with health)
@@ -227,15 +200,11 @@ class ServiceRegistry {
         if (name === "consul") continue;
         const instances = await consulClient.getAllServiceInstances(name);
         let serviceInstances = this.services.get(name);
-        console.log(`------all instances-----`, JSON.stringify({ instances }));
         for (const instance of instances) {
           const isHealthy =
             !instance.Checks ||
             instance.Checks.every((check: any) => check.Status === "passing");
           const key = instance.Service.ID;
-          console.log(
-            `${key}: isHealth: ${isHealthy}, health: ${JSON.stringify(instance.Checks)}`,
-          );
           if (isHealthy) {
             if (!serviceInstances) {
               serviceInstances = new Map<string, ServiceEntry>();
@@ -250,7 +219,6 @@ class ServiceRegistry {
             });
           }
           else {
-            console.log(`----deregister service----`, key);
             if (serviceInstances?.has(key)) {
               serviceInstances.delete(key);
             }

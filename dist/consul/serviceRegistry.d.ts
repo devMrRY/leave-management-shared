@@ -25,7 +25,7 @@ declare class ServiceRegistry {
     /**
      * Deregister a service from Consul
      */
-    deregister(name: string, serviceId: string): Promise<void>;
+    deregister(name: string): Promise<void>;
     /**
      * Discover a service URL by name (check Consul first, then memory, then env vars)
      */
