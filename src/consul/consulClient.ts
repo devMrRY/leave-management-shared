@@ -67,11 +67,12 @@ class ConsulClient {
    */
   async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.consulUrl}/v1/agent/self`, {
-        timeout: 2000,
-      } as any);
+      console.log("Checking consul: ", this.consulUrl);
+      const response = await fetch(`${this.consulUrl}/v1/agent/self`);
+      console.log("Status: ", response.status);
       return response.ok;
     } catch (error) {
+      console.error("Consul availability check failed:", error);
       return false;
     }
   }
