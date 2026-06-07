@@ -18,7 +18,6 @@ export class HttpClient {
     this.getRequestContext = options.getRequestContext;
   }
 
-
   private buildHeaders(extra?: HeadersInit): Headers {
     const headers = new Headers(extra);
     const ctx = this.getRequestContext?.();
