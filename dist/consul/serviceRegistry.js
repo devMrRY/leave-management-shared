@@ -202,22 +202,21 @@ class ServiceRegistry {
                             });
                         }
                     }
-                    else {
-                        console.log(`----deregister service----`, key);
-                        if (serviceInstances?.has(key)) {
-                            serviceInstances.delete(key);
-                        }
-                        // Try to deregister this unhealthy instance (by instance ID if available)
-                        try {
-                            await this.deregister(name, key);
-                        }
-                        catch (err) {
-                            console.warn(`Failed to deregister unhealthy instance ${key}:`, err.message);
-                        }
-                    }
-                }
-                if (serviceInstances) {
-                    this.services.set(name, serviceInstances);
+                    // else {
+                    //   console.log(`----deregister service----`, key);
+                    //   if (serviceInstances?.has(key)) {
+                    //     serviceInstances.delete(key);
+                    //   }
+                    //   // Try to deregister this unhealthy instance (by instance ID if available)
+                    //   try {
+                    //     await this.deregister(name, key);
+                    //   } catch (err) {
+                    //     console.warn(
+                    //       `Failed to deregister unhealthy instance ${key}:`,
+                    //       (err as Error).message,
+                    //     );
+                    //   }
+                    // }
                 }
             }
         }
