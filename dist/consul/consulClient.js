@@ -80,6 +80,7 @@ class ConsulClient {
             // Use first healthy instance (in production, implement load balancing)
             const instance = healthyInstances[Math.floor(Math.random() * healthyInstances.length)];
             const url = this.buildServiceUrl(instance);
+            console.log(`----found instance :: ${instance}-------`);
             return { url, instances: [instance] };
         }
         catch (error) {
