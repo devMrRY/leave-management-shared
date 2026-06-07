@@ -65,7 +65,7 @@ class ServiceRegistry {
                         HTTP: healthCheckUrl,
                         Interval: "10s",
                         Timeout: "5s",
-                        DeregisterCriticalServiceAfter: "60s",
+                        DeregisterCriticalServiceAfter: "2m",
                     },
                     Tags: ["v1"],
                 });
@@ -108,6 +108,12 @@ class ServiceRegistry {
     async discover(name) {
         // Try Consul first if available
         console.log(`---${this.isConsulAvailable()}-----`);
+        const serviceInstances = this.services.get(name);
+        const allInstances = [...(serviceInstances?.values() || [])];
+        const instance = allInstances[Math.floor(Math.random() * allInstances.length)];
+        if (instance) {
+            return instance.url;
+        }
         if (this.isConsulAvailable()) {
             try {
                 const result = await consulClient_1.consulClient.discoverService(name);
@@ -118,13 +124,10 @@ class ServiceRegistry {
             }
             catch (error) {
                 console.warn(`⚠️ Consul discovery failed for ${name}:`, error.message);
+                return null;
             }
         }
-        const fallback = this.services.get(name);
-        if (!fallback)
-            return null;
-        const instances = [...fallback.values()];
-        return instances[Math.floor(Math.random() * instances.length)].url;
+        return null;
     }
     /**
      * Get all registered services
@@ -175,7 +178,6 @@ class ServiceRegistry {
             this.initializeConsul();
             return;
         }
-        ;
         try {
             // 1. Get all service names from Consul
             const allServices = await consulClient_1.consulClient.listServices();
@@ -186,41 +188,35 @@ class ServiceRegistry {
                 if (name === "consul")
                     continue;
                 const instances = await consulClient_1.consulClient.getAllServiceInstances(name);
-                const serviceInstances = this.services.get(name);
-                console.log(`------all instances-----`, JSON.stringify({ instances, memoryInstances: serviceInstances }));
+                let serviceInstances = this.services.get(name);
+                console.log(`------all instances-----`, JSON.stringify({ instances }));
                 for (const instance of instances) {
                     const isHealthy = !instance.Checks ||
                         instance.Checks.every((check) => check.Status === "passing");
                     const key = instance.Service.ID;
                     console.log(`${key}: isHealth: ${isHealthy}, health: ${JSON.stringify(instance.Checks)}`);
                     if (isHealthy) {
+                        if (!serviceInstances) {
+                            serviceInstances = new Map();
+                        }
+                        serviceInstances.set(key, {
+                            name,
+                            url: `http://${instance.Service.Address}:${instance.Service.Port}`,
+                            port: Number(instance.Service.Port),
+                            healthy: true,
+                            lastHealthCheck: new Date(),
+                            source: "consul",
+                        });
+                    }
+                    else {
+                        console.log(`----deregister service----`, key);
                         if (serviceInstances?.has(key)) {
-                            serviceInstances.set(key, {
-                                name,
-                                url: `http://${instance.Service.Address}:${instance.Service.Port}`,
-                                port: Number(instance.Service.Port),
-                                healthy: true,
-                                lastHealthCheck: new Date(),
-                                source: "consul",
-                            });
+                            serviceInstances.delete(key);
                         }
                     }
-                    // else {
-                    //   console.log(`----deregister service----`, key);
-                    //   if (serviceInstances?.has(key)) {
-                    //     serviceInstances.delete(key);
-                    //   }
-                    //   // Try to deregister this unhealthy instance (by instance ID if available)
-                    //   try {
-                    //     await this.deregister(name, key);
-                    //   } catch (err) {
-                    //     console.warn(
-                    //       `Failed to deregister unhealthy instance ${key}:`,
-                    //       (err as Error).message,
-                    //     );
-                    //   }
-                    // }
                 }
+                if (serviceInstances)
+                    this.services.set(name, serviceInstances);
             }
         }
         catch (err) {
