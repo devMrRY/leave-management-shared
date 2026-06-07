@@ -171,8 +171,11 @@ class ServiceRegistry {
      */
     async refreshAll() {
         console.log(`------refreshAll------`, this.isConsulAvailable());
-        if (!this.isConsulAvailable())
+        if (!this.isConsulAvailable()) {
+            this.initializeConsul();
             return;
+        }
+        ;
         try {
             // 1. Get all service names from Consul
             const allServices = await consulClient_1.consulClient.listServices();

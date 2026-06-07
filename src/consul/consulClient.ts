@@ -32,20 +32,7 @@ interface ConsulServiceInstance {
     Status: string;
   }>;
 }
-interface ConsulCatalogServiceInstance {
-  ID: string;
-  Node: string;
-  Address: string;
-  Datacenter: string;
 
-  ServiceID: string;
-  ServiceName: string;
-  ServiceAddress: string;
-  ServicePort: number;
-
-  ServiceTags?: string[];
-  ServiceMeta?: Record<string, string>;
-}
 interface ServiceDiscoveryResult {
   url: string;
   instances: ConsulServiceInstance[];
@@ -66,15 +53,19 @@ class ConsulClient {
    * Check if Consul is available
    */
   async isAvailable(): Promise<boolean> {
-    try {
-      console.log("Checking consul: ", this.consulUrl);
-      const response = await fetch(`${this.consulUrl}/v1/agent/self`);
-      console.log("Status: ", response.status);
-      return response.ok;
-    } catch (error) {
-      console.error("Consul availability check failed:", error);
-      return false;
+    for (let i = 0; i < 5; i++) {
+      try {
+        console.log(`Checking consul attempt ${i + 1}`);
+        console.log("Checking consul: ", this.consulUrl);
+        const response = await fetch(`${this.consulUrl}/v1/agent/self`);
+        console.log("Status: ", response.status);
+        return response.ok;
+      } catch (error) {
+        console.log(`consul unavailable reAttempt ${i + 1} failed`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
     }
+    return false;
   }
 
   /**
@@ -150,7 +141,7 @@ class ConsulClient {
       const instance =
         healthyInstances[Math.floor(Math.random() * healthyInstances.length)];
       const url = this.buildServiceUrl(instance);
-      console.log(`----found instance :: ${instance}-------`)
+      console.log(`----found instance :: ${instance}-------`);
       return { url, instances: [instance] };
     } catch (error) {
       console.warn(

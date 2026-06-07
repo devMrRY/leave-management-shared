@@ -15,16 +15,20 @@ class ConsulClient {
      * Check if Consul is available
      */
     async isAvailable() {
-        try {
-            console.log("Checking consul: ", this.consulUrl);
-            const response = await fetch(`${this.consulUrl}/v1/agent/self`);
-            console.log("Status: ", response.status);
-            return response.ok;
+        for (let i = 0; i < 5; i++) {
+            try {
+                console.log(`Checking consul attempt ${i + 1}`);
+                console.log("Checking consul: ", this.consulUrl);
+                const response = await fetch(`${this.consulUrl}/v1/agent/self`);
+                console.log("Status: ", response.status);
+                return response.ok;
+            }
+            catch (error) {
+                console.log(`consul unavailable reAttempt ${i + 1} failed`);
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
         }
-        catch (error) {
-            console.error("Consul availability check failed:", error);
-            return false;
-        }
+        return false;
     }
     /**
      * Register a service with Consul
