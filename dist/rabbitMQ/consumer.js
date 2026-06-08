@@ -24,10 +24,10 @@ const connectChannel = async () => {
         catch (err) {
             lastError = err;
             console.log(`⏳ RabbitMQ not ready, retrying... (${i + 1})`);
-            await new Promise((res) => setTimeout(res, 3000));
+            await new Promise((res) => setTimeout(res, 5000));
         }
     }
-    channel = await connection.createChannel();
+    channel = await connection?.createChannel();
     if (!channel)
         throw lastError;
     console.log("🐇 Consumer connected");
